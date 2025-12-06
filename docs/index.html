@@ -104,7 +104,7 @@ document.getElementById("runBtn").onclick = async function () {
     try {
         const txtResp = await fetch("data.txt");
         if (!txtResp.ok) throw new Error("Cannot read data.txt");
-        const promptText = await txtResp.text();
+        let promptText = await txtResp.text();
         const now = new Date();
         const cn = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
 
