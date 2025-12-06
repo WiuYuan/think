@@ -24,7 +24,7 @@
 </head>
 <body>
 
-<h2>Run Remote LLM</h2>
+<h2>Run Remote LLM With Local data.txt</h2>
 
 <button id="runBtn">Run Cloudflare Worker</button>
 
@@ -33,19 +33,28 @@
 <script>
 document.getElementById("runBtn").onclick = async function () {
     const output = document.getElementById("output");
-    output.innerText = "Running... Please wait.";
+    output.innerText = "Reading data.txt...";
 
     try {
+        // ① 读取同目录下 data.txt
+        const txtResp = await fetch("data.txt");
+        if (!txtResp.ok) throw new Error("Cannot read data.txt");
+        const promptText = await txtResp.text();
+
+        output.innerText = "Sending prompt to Cloudflare Worker...\n\n" + promptText;
+
+        // ② 发送给 Cloudflare Worker
         const response = await fetch("https://test.3089547651.workers.dev", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                prompt: "Run computation for Wen Yuan's predefined task."
+                prompt: promptText
             })
         });
 
         const data = await response.json();
-        output.innerText = JSON.stringify(data, null, 2);
+
+        output.innerText = "Worker Response:\n\n" + JSON.stringify(data, null, 2);
 
     } catch (err) {
         output.innerText = "Error: " + err;
