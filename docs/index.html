@@ -15,34 +15,65 @@
   }
   #output {
     margin-top: 20px;
-    white-space: pre-wrap;
-    background: #f0f0f0;
+    background: #f9fafb;
     padding: 15px;
     border-radius: 8px;
     min-height: 80px;
+    border: 1px solid #e5e7eb;
   }
+  #output strong { font-weight: 600; }
+  #output em { font-style: italic; }
+  #output ul { padding-left: 20px; }
 </style>
 </head>
 <body>
 
 <h2>Run Remote LLM With Local data.txt</h2>
 
-<button id="runBtn">Run Cloudflare Worker</button>
+<button id="runBtn">Quick Think</button>
 
 <div id="output">Click the button to start...</div>
 
 <script>
+// --- Simple Markdown Parser ---
+function renderMarkdown(md) {
+    // Escape HTML
+    md = md.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // Bold: **text**
+    md = md.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+    // Italic: *text*
+    md = md.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+    // Headings ## → <h2>
+    md = md.replace(/^### (.*$)/gim, "<h3>$1</h3>");
+    md = md.replace(/^## (.*$)/gim, "<h2>$1</h2>");
+    md = md.replace(/^# (.*$)/gim, "<h1>$1</h1>");
+
+    // Lists: "- xxx"
+    md = md.replace(/^- (.*$)/gim, "<ul><li>$1</li></ul>");
+
+    // Line breaks
+    md = md.replace(/\n/g, "<br>");
+
+    // Merge adjacent <ul>
+    md = md.replace(/<\/ul>\s*<ul>/g, "");
+
+    return md;
+}
+
 document.getElementById("runBtn").onclick = async function () {
     const output = document.getElementById("output");
-    output.innerText = "Processing...";
+    output.innerHTML = "Processing...";
 
     try {
-        // ① 读取 data.txt
+        // ① Load prompt
         const txtResp = await fetch("data.txt");
         if (!txtResp.ok) throw new Error("Cannot read data.txt");
         const promptText = await txtResp.text();
 
-        // ② 发给 Cloudflare Worker
+        // ② Send to Cloudflare Worker
         const response = await fetch("https://test.3089547651.workers.dev", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -51,7 +82,7 @@ document.getElementById("runBtn").onclick = async function () {
 
         const json = await response.json();
 
-        // ③ 提取 DeepSeek 的 content 字段
+        // ③ Parse DeepSeek result
         let content = "(no content)";
         try {
             content = json.choices[0].message.content;
@@ -59,10 +90,11 @@ document.getElementById("runBtn").onclick = async function () {
             content = JSON.stringify(json, null, 2);
         }
 
-        output.innerText = content;
+        // ④ Render Markdown into HTML
+        output.innerHTML = renderMarkdown(content);
 
     } catch (err) {
-        output.innerText = "Error: " + err;
+        output.innerHTML = "Error: " + err;
     }
 };
 </script>
