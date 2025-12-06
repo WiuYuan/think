@@ -81,7 +81,7 @@
 <script>
 // --- Simple Markdown Parser ---
 function renderMarkdown(md) {
-    md = md.replace(/</g, "&lt;").replace(/>/g, "&gt;/");
+    md = md.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     md = md.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
     md = md.replace(/\*(.*?)\*/g, "<em>$1</em>");
