@@ -1,0 +1,8 @@
+{
+  "name": "QuickThink",
+  "short_name": "QuickThink",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6"
+}
