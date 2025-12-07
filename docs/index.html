@@ -26,7 +26,6 @@
     color: #1f2937;
   }
 
-  /* 输出框放在按钮上面 */
   #output {
     width: 90%;
     max-width: 600px;
@@ -39,15 +38,11 @@
     line-height: 1.5;
     color: #374151;
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    margin-bottom: 30px; /* 与按钮间隔 */
+    margin-bottom: 30px;
   }
 
-  #output strong { font-weight: 700; }
-  #output em { font-style: italic; }
-  #output ul { padding-left: 22px; }
-
-  /* 大按钮放在屏幕中央偏下 */
-  #runBtn {
+  /* --- 按钮样式 --- */
+  .bigBtn {
     width: 85%;
     max-width: 400px;
     height: 70px;
@@ -60,9 +55,10 @@
     cursor: pointer;
     box-shadow: 0 6px 14px rgba(59,130,246,0.35);
     transition: 0.15s;
+    margin-bottom: 18px;
   }
 
-  #runBtn:active {
+  .bigBtn:active {
     transform: scale(0.95);
   }
 </style>
@@ -72,11 +68,12 @@
 
 <h2>Quick Think</h2>
 
-<!-- 显示框在上 -->
 <div id="output">Click the button to start…</div>
 
-<!-- 按钮在下 -->
-<button id="runBtn">🧠 Think Now</button>
+<!-- NEW: 三个按钮 -->
+<button id="runMorning" class="bigBtn">🌅 Morning Think</button>
+<button id="runNight" class="bigBtn">🌙 Night Think</button>
+<button id="runBtn" class="bigBtn">🧠 Think Now</button>
 
 <script>
 // --- Simple Markdown Parser ---
@@ -97,7 +94,9 @@ function renderMarkdown(md) {
     return md;
 }
 
-document.getElementById("runBtn").onclick = async function () {
+// 通用处理函数（模式可选）
+// NEW
+async function runThink(modeTag = "") {
     const output = document.getElementById("output");
     output.innerHTML = "Processing…";
 
@@ -105,6 +104,7 @@ document.getElementById("runBtn").onclick = async function () {
         const txtResp = await fetch("data.txt");
         if (!txtResp.ok) throw new Error("Cannot read data.txt");
         let promptText = await txtResp.text();
+
         const now = new Date();
         const cn = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
 
@@ -114,10 +114,10 @@ document.getElementById("runBtn").onclick = async function () {
         const hh = cn.getHours();
         const mm = cn.getMinutes().toString().padStart(2, "0");
 
-        // → 2025年12月22日15点20分
         const chinaTime = `${y}年${m}月${d}日${hh}点${mm}分`;
 
         promptText += `\n\n当前时间：${chinaTime}`;
+        if (modeTag) promptText += `\n模式：${modeTag}`;
 
         const response = await fetch("https://test.3089547651.workers.dev", {
             method: "POST",
@@ -128,18 +128,21 @@ document.getElementById("runBtn").onclick = async function () {
         const json = await response.json();
 
         let content = "(no content)";
-        try {
-            content = json.choices[0].message.content;
-        } catch {
-            content = JSON.stringify(json, null, 2);
-        }
+        try { content = json.choices[0].message.content; }
+        catch { content = JSON.stringify(json, null, 2); }
 
         output.innerHTML = renderMarkdown(content);
 
     } catch (err) {
         output.innerHTML = "Error: " + err;
     }
-};
+}
+
+// --- 绑定按钮事件 ---
+// NEW
+document.getElementById("runMorning").onclick = () => runThink("我现在需要思考我该做什么, 现在我刚刚起床");
+document.getElementById("runNight").onclick = () => runThink("我现在需要思考我该做什么, 现在我准备睡觉");
+document.getElementById("runBtn").onclick = () => runThink("我现在有点迷茫状态不好");
 
 // register service worker
 if ("serviceWorker" in navigator) {
